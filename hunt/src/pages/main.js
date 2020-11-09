@@ -9,36 +9,50 @@ export default class Main extends Component {
 
     state = {
         docs: [],
+        productInfo: {},
+        page: 1,
     };
 
     componentDidMount(){
         this.loadProducts();
     }
 
-    loadProducts = async () => {
-        const response = await api.get('/products');
+    loadProducts = async ( page = 1) => {
+        const response = await api.get(`/products?page=${page}`);
     
-        const { docs } = response.data;
+        const { docs, ...productInfo } = response.data;
 
-        this.setState({ docs })
+        this.setState({ docs: [...this.state.docs, ...docs], productInfo, page })
+    };
+
+    loadMore = () => {
+        const { page, productInfo } = this.state;
+
+        if(page === productInfo.pages) return;
+
+        const pageNumber = page + 1;
+
+        this.loadProducts(pageNumber);
     };
 
     renderItem = ({ item }) => (
-    <View style={StyleSheet.productContainer}>
-        <Text style={StyleSheet.productTitle}>{item.title}</Text>
-        <Text style={StyleSheet.productDescription}>{item.description}</Text>
+    <View style={styles.productContainer}>
+        <Text style={styles.productTitle}>{item.title}</Text>
+        <Text style={styles.productDescription}>{item.description}</Text>
 
-        <TouchableOpacity style={StyleSheet.productButton} onPress={() => {}}><Text style={StyleSheet.productButtonText}>Acessar</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.productButton} onPress={() => {}}><Text style={styles.productButtonText}>Acessar</Text></TouchableOpacity>
     </View>);
 
     render(){
         return (
-            <View style={StyleSheet.container}>
+            <View style={styles.container}>
                 <FlatList 
                     contentContainerStyle={style.list}
                     data={this.state.docs}
                     keyExtractor={item => item._id}
                     renderItem={this.renderItem}
+                    onEndReached={this.loadMore}
+                    onEndReachedThreshold={0.1}
                 />
             </View>
         )
